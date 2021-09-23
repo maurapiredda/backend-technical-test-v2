@@ -79,4 +79,9 @@ public class Order
             foreignKey = @ForeignKey(name = "order_customer_id", value = ConstraintMode.CONSTRAINT),
             nullable = false)
     private Customer customer;
+
+    @Hidden
+    @JsonIgnore
+    @Column(nullable = false)
+    private Boolean notified = false;
 }
