@@ -2,16 +2,22 @@ package com.tui.proof.model.service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.ExampleMatcher.GenericPropertyMatcher;
+import org.springframework.data.domain.ExampleMatcher.StringMatcher;
 import org.springframework.stereotype.Service;
 
 import com.tui.proof.dao.OrderDao;
 import com.tui.proof.model.Address;
+import com.tui.proof.model.Customer;
 import com.tui.proof.model.Order;
 import com.tui.proof.model.PilotesNumber;
 
@@ -39,6 +45,9 @@ public class OrderService
 
     @Autowired
     private AddressService addressService;
+
+    @Autowired
+    private CustomerService customerService;
 
     public Order get(String number)
     {
@@ -75,7 +84,7 @@ public class OrderService
 
         existingOrder.setPilotesNumber(order.getPilotesNumber());
         existingOrder.setDeliveryAddress(order.getDeliveryAddress());
-
+        checkSameCustomerOnUpdate(order, existingOrder);
         checkCreationDate(existingOrder);
         internalSave(existingOrder);
         return orderNumber;
@@ -83,6 +92,7 @@ public class OrderService
 
     private Order internalSave(Order order)
     {
+        setSavedCustomer(order);
         setSavedAddress(order);
 
         PilotesNumber pilotesNumber = order.getPilotesNumber();
@@ -125,6 +135,52 @@ public class OrderService
         if (nowUtc.isAfter(expirationTimeUtc))
         {
             // TODO error
+        }
+    }
+
+    public List<Order> searchByCustomer(Customer customer)
+    {
+        GenericPropertyMatcher containingPropertyMatcher = GenericPropertyMatcher.of(StringMatcher.CONTAINING);
+        ExampleMatcher orderMatcher = ExampleMatcher.matching()
+                .withMatcher("customer.firstName", containingPropertyMatcher)
+                .withMatcher("customer.lastName", containingPropertyMatcher)
+                .withMatcher("customer.telephone", containingPropertyMatcher)
+                .withMatcher("customer.email", containingPropertyMatcher);
+
+        Order filter = new Order();
+        filter.setCustomer(customer);
+        return orderDao.findAll(Example.of(filter, orderMatcher));
+    }
+
+    private void setSavedCustomer(Order order)
+    {
+        Customer customer = order.getCustomer();
+        if (customer == null)
+        {
+            // TODO error
+        }
+
+        String email = customer.getEmail();
+        if (email == null)
+        {
+            // TODO error
+        }
+        Customer existingCustomer = customerService.getByEmail(email);
+        if (existingCustomer == null)
+        {
+            // TODO error
+        }
+        order.setCustomer(existingCustomer);
+    }
+
+    private void checkSameCustomerOnUpdate(Order incomingOrder, Order existingOrder)
+    {
+        // TODO errors
+        String incomingEmail = Optional.ofNullable(incomingOrder.getCustomer()).map(Customer::getEmail).orElse(null);
+        String existingEmail = Optional.ofNullable(existingOrder.getCustomer()).map(Customer::getEmail).orElse(null);
+        if (!existingEmail.equals(incomingEmail))
+        {
+            // TODO errors
         }
     }
 

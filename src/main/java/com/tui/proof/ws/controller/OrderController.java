@@ -1,5 +1,7 @@
 package com.tui.proof.ws.controller;
 
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tui.proof.MainApplication;
+import com.tui.proof.model.Customer;
 import com.tui.proof.model.Order;
 import com.tui.proof.model.service.OrderService;
 
@@ -73,4 +76,15 @@ public class OrderController
     {
         return orderService.update(order);
     }
+
+    // TODO swagger
+    @PostMapping("/searchByCustomer")
+    public List<Order> searchByCustomer(
+            @Valid
+            @RequestBody
+            Customer customer)
+    {
+        return orderService.searchByCustomer(customer);
+    }
+    
 }

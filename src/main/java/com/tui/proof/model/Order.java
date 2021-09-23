@@ -68,5 +68,15 @@ public class Order
             format = "yyyy-MM-ddThh:mm:ss+/-hh:mm")
     @Column(nullable = false)
     private ZonedDateTime creationDate;
-    
+
+    @NotNull(message = "the order's customer cannot be empty")
+    @Schema(description = "The order's customer",
+            example = "{\"firstName\": \"Clair\", \"lastName\": \"Redfield\", \"telephone\": \"+1 7577149738\" \"email\": \"clair.redfield@terrasave.com\"}",
+            required = true)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "customer_id",
+            referencedColumnName = "id",
+            foreignKey = @ForeignKey(name = "order_customer_id", value = ConstraintMode.CONSTRAINT),
+            nullable = false)
+    private Customer customer;
 }
