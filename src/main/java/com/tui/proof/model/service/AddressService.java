@@ -20,7 +20,7 @@ public class AddressService
     @Autowired
     private AddressDao addressDao;
 
-    public Address getFirstAddress(Address address)
+    public Address find(Address address)
     {
         if (address == null)
         {
