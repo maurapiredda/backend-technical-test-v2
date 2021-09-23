@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tui.proof.MainApplication;
+import com.tui.proof.PilotesApplication;
 import com.tui.proof.model.Customer;
 import com.tui.proof.model.Order;
 import com.tui.proof.model.service.OrderService;
@@ -26,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @RestController
-@RequestMapping(path = MainApplication.VERSION_1_0 + "/orders")
+@RequestMapping(path = PilotesApplication.VERSION_1_0 + "/orders")
 @Tag(name = "Order")
 public class OrderController
 {

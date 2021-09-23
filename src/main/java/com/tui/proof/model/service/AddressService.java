@@ -7,6 +7,8 @@ import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
 import com.tui.proof.dao.AddressDao;
+import com.tui.proof.error.PilotesErrorCode;
+import com.tui.proof.error.PilotesException;
 import com.tui.proof.model.Address;
 
 /**
@@ -24,8 +26,7 @@ public class AddressService
     {
         if (address == null)
         {
-            // TODO error?
-            return null;
+            throw new PilotesException(PilotesErrorCode.ADDRESS_NULL);
         }
         return addressDao.findOne(Example.of(address)).orElse(null);
     }
@@ -34,8 +35,7 @@ public class AddressService
     {
         if (address == null)
         {
-            // TODO error
-            return null;
+            throw new PilotesException(PilotesErrorCode.ADDRESS_NULL);
         }
         return addressDao.save(address);
     }

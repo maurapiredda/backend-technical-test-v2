@@ -8,14 +8,14 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication
 @EnableScheduling
 @EnableTransactionManagement
-public class MainApplication
+public class PilotesApplication
 {
 
     public static final String VERSION_1_0 = "/v1.0";
 
     public static void main(String[] args)
     {
-        SpringApplication.run(MainApplication.class, args);
+        SpringApplication.run(PilotesApplication.class, args);
     }
 
 }

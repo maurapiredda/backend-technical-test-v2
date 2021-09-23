@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -27,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.tui.proof.dao.OrderDao;
+import com.tui.proof.error.PilotesErrorCode;
+import com.tui.proof.error.PilotesException;
 import com.tui.proof.model.Address;
 import com.tui.proof.model.Customer;
 import com.tui.proof.model.Order;
@@ -84,12 +85,14 @@ public class OrderService
 
         if (StringUtils.isBlank(notifierWebhookApiKey))
         {
-            // TODO error
+            throw new IllegalArgumentException(
+                    "The parameter order.notifier.webhook.apyKey cannot be blank. Please check the application.properties file.");
         }
 
         if (!UrlValidator.getInstance().isValid(notifierWebhookUrl))
         {
-            // TODO error
+            throw new IllegalArgumentException(
+                    "The parameter order.notifier.webhook.url must be a valid URL. Please check the application.properties file.");
         }
 
         RestTemplateBuilder restBuilder = new RestTemplateBuilder();
@@ -109,7 +112,7 @@ public class OrderService
     {
         if (order == null)
         {
-            // TODO error
+            throw ex(PilotesErrorCode.ORDER_NULL);
         }
 
         order.setCreationDate(ZonedDateTime.now(UTC));
@@ -123,19 +126,20 @@ public class OrderService
         String orderNumber = order.getOrderNumber();
         if (orderNumber == null)
         {
-            // TODO error
+            throw ex(PilotesErrorCode.ORDER_NUMBER_NULL);
         }
 
         Order existingOrder = get(orderNumber);
         if (existingOrder == null)
         {
-            // TODO error 404
+            throw ex(PilotesErrorCode.ORDER_NULL);
         }
 
-        existingOrder.setPilotesNumber(order.getPilotesNumber());
-        existingOrder.setDeliveryAddress(order.getDeliveryAddress());
         checkSameCustomerOnUpdate(order, existingOrder);
         checkCreationDate(existingOrder);
+        
+        existingOrder.setPilotesNumber(order.getPilotesNumber());
+        existingOrder.setDeliveryAddress(order.getDeliveryAddress());
         internalSave(existingOrder);
         return orderNumber;
     }
@@ -155,10 +159,9 @@ public class OrderService
     private void setSavedAddress(Order order)
     {
         Address deliveryAddress = order.getDeliveryAddress();
-
         if (deliveryAddress == null)
         {
-            // TODO error
+            throw ex(PilotesErrorCode.ADDRESS_NULL);
         }
 
         Address existingAddress = addressService.find(deliveryAddress);
@@ -184,7 +187,7 @@ public class OrderService
 
         if (nowUtc.isAfter(expirationTimeUtc))
         {
-            // TODO error
+            throw ex(PilotesErrorCode.ORDER_EXPIRED);
         }
     }
 
@@ -241,34 +244,40 @@ public class OrderService
 
     private void setSavedCustomer(Order order)
     {
-        Customer customer = order.getCustomer();
-        if (customer == null)
-        {
-            // TODO error
-        }
-
-        String email = customer.getEmail();
-        if (email == null)
-        {
-            // TODO error
-        }
+        String email = getCustomerEmail(order);
+        
         Customer existingCustomer = customerService.getByEmail(email);
         if (existingCustomer == null)
         {
-            // TODO error
+            throw ex(PilotesErrorCode.CUSTOMER_NOT_FOUND);
         }
         order.setCustomer(existingCustomer);
     }
 
     private void checkSameCustomerOnUpdate(Order incomingOrder, Order existingOrder)
     {
-        // TODO errors
-        String incomingEmail = Optional.ofNullable(incomingOrder.getCustomer()).map(Customer::getEmail).orElse(null);
-        String existingEmail = Optional.ofNullable(existingOrder.getCustomer()).map(Customer::getEmail).orElse(null);
+        String incomingEmail = getCustomerEmail(incomingOrder);
+        String existingEmail = getCustomerEmail(existingOrder);
         if (!existingEmail.equals(incomingEmail))
         {
-            // TODO errors
+            throw ex(PilotesErrorCode.ORDER_CUSTOMER_CANNOT_BE_CHANGED);
         }
+    }
+    
+    private String getCustomerEmail(Order order)
+    {
+        Customer customer = order.getCustomer();
+        if (customer == null)
+        {
+            throw ex(PilotesErrorCode.CUSTOMER_NULL);
+        }
+
+        String email = customer.getEmail();
+        if (email == null)
+        {
+            throw ex(PilotesErrorCode.CUSTOMER_EMAIL_NULL);
+        }
+        return email;
     }
 
     private boolean sendOrdersToWebhook(List<Order> ordersToNotify)
@@ -291,5 +300,10 @@ public class OrderService
             log.info("Orders has not been sent: http status {} - message {}", statusCode, message);
         }
         return isResponseOk;
+    }
+    
+    private PilotesException ex(PilotesErrorCode errorCode)
+    {
+        return new PilotesException(errorCode);
     }
 }
