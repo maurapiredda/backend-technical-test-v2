@@ -2,6 +2,7 @@ package com.tui.proof.model;
 
 import java.time.ZonedDateTime;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
@@ -44,7 +45,7 @@ public class Order
     @Schema(description = "The order's delivery address",
             example = "{\"street\": \"785 Cabell Avenue\", \"postcode\": \"23219\", \"city\": \"Raccoon\" \"country\": \"USA\"}",
             required = true)
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id",
             referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "order_address_id", value = ConstraintMode.CONSTRAINT),
@@ -82,6 +83,6 @@ public class Order
 
     @Hidden
     @JsonIgnore
-    @Column(nullable = false)
-    private Boolean notified = false;
+    @Column(columnDefinition = "boolean not null default false")
+    private Boolean notified;
 }

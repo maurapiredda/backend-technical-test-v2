@@ -77,14 +77,18 @@ public class OrderController
         return orderService.update(order);
     }
 
-    // TODO swagger
+    @Operation(tags = "Order",
+            summary = "Returns the list of orders that belongs to the customer that match the given filter. "
+                    + "The properties of the passed customer are not required to strictly match with the existing customers, evan a partial match will return the orders."
+                    + "For example, the filter {\"email\": \".com\"} will return all orders which the customer's email contains the string '.com'")
+    @ApiResponse(responseCode = "200", description = "The list of the orders of the given customer.")
+
     @PostMapping("/searchByCustomer")
     public List<Order> searchByCustomer(
-            @Valid
             @RequestBody
             Customer customer)
     {
         return orderService.searchByCustomer(customer);
     }
-    
+
 }

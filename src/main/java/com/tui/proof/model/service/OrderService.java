@@ -113,6 +113,7 @@ public class OrderService
         }
 
         order.setCreationDate(ZonedDateTime.now(UTC));
+        order.setNotified(false);
         Order savedOrder = internalSave(order);
         return savedOrder.getOrderNumber();
     }

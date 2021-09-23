@@ -1,5 +1,7 @@
 package com.tui.proof.model.service;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import com.tui.proof.dao.CustomerDao;
 import com.tui.proof.model.Customer;
 
 @Service
+@Transactional
 public class CustomerService
 {
    @Autowired
