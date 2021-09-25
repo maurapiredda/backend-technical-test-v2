@@ -1,5 +1,7 @@
 package com.tui.proof.service;
 
+import java.util.Optional;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +30,13 @@ public class AddressService
      * @return the Address that matches with given {@code filter} or null if it doesn't exist
      * @throws PilotesException with {@link PilotesErrorCode#ADDRESS_NULL} if {@code filter} is null
      */
-    public Address find(Address filter)
+    public Optional<Address> find(Address filter)
     {
         if (filter == null)
         {
             throw new PilotesException(PilotesErrorCode.ADDRESS_NULL);
         }
-        return addressDao.findOne(Example.of(filter)).orElse(null);
+        return addressDao.findOne(Example.of(filter));
     }
 
     /**

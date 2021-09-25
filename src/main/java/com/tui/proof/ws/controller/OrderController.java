@@ -51,7 +51,7 @@ public class OrderController
             @PathVariable
             String number)
     {
-        return orderService.get(number);
+        return orderService.get(number).orElse(null);
     }
 
     @Operation(tags = "Order", summary = "Saves a new order and returns the order numeber.")

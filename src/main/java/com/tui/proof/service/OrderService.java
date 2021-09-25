@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -118,7 +119,7 @@ public class OrderService
      * @return the order identified by the {@code number} or null if it doesn't exist
      * @throws PilotesException with {@link PilotesErrorCode#ORDER_NUMBER_EMPTY} if the {@code number} is blank
      */
-    public Order get(String number)
+    public Optional<Order> get(String number)
     {
         if (StringUtils.isBlank(number))
         {
@@ -126,7 +127,7 @@ public class OrderService
         }
         Order filter = new Order();
         filter.setOrderNumber(number);
-        return orderDao.findOne(Example.of(filter)).orElse(null);
+        return orderDao.findOne(Example.of(filter));
     }
 
     /**
@@ -144,10 +145,7 @@ public class OrderService
      */
     public String save(Order order)
     {
-        if (order == null)
-        {
-            throw ex(PilotesErrorCode.ORDER_NULL);
-        }
+        checkOrderNotNull(order);
         setDefaultFields(order);
         Order savedOrder = internalSave(order);
         String orderNumber = savedOrder.getOrderNumber();
@@ -161,6 +159,7 @@ public class OrderService
      * @param order the order to update
      * @return the order number
      * 
+     * @throws PilotesException with {@link PilotesErrorCode#ORDER_NULL} if the given order is null.
      * @throws PilotesException with {@link PilotesErrorCode#ORDER_NUMBER_EMPTY} it the order number is blank
      * @throws PilotesException with {@link PilotesErrorCode#ORDER_NOT_FOUND} if the order identified by the number
      *                          doesn't
@@ -169,19 +168,19 @@ public class OrderService
      *                          refers to a customer different from the customer of the existing order
      * @throws PilotesException with {@link PilotesErrorCode#ORDER_EXPIRED} if the incoming order is too old and cannot
      *                          be updated anymore
+     * @throws PilotesException with {@link PilotesErrorCode#ORDER_NOTIFIED_ALREDY} if the incoming order is already
+     *                          been notified and cannot be updated anymore
      * @see #internalSave(Order)
      */
     public String update(Order order)
     {
+        checkOrderNotNull(order);
         String orderNumber = order.getOrderNumber();
-        Order existingOrder = get(orderNumber);
-        if (existingOrder == null)
-        {
-            throw ex(PilotesErrorCode.ORDER_NOT_FOUND);
-        }
+        Order existingOrder = get(orderNumber).orElseThrow(() -> ex(PilotesErrorCode.ORDER_NOT_FOUND));
 
         checkSameCustomerOnUpdate(order, existingOrder);
         checkCreationDate(existingOrder);
+        checkNotified(existingOrder);
 
         existingOrder.setPilotesNumber(order.getPilotesNumber());
         existingOrder.setDeliveryAddress(order.getDeliveryAddress());
@@ -231,18 +230,16 @@ public class OrderService
 
     private void setAddress(Order order)
     {
-        Address deliveryAddress = order.getDeliveryAddress();
-        if (deliveryAddress == null)
-        {
-            throw ex(PilotesErrorCode.ADDRESS_NULL);
-        }
+        Address deliveryAddress = Optional.ofNullable(order.getDeliveryAddress())
+                .orElseThrow(() -> ex(PilotesErrorCode.ADDRESS_NULL));
 
-        Address existingAddress = addressService.find(deliveryAddress);
-        if (existingAddress == null)
+        Address existingAddress = addressService.find(deliveryAddress).orElseGet(() ->
         {
-            existingAddress = addressService.save(deliveryAddress);
-            log.debug("Saved new address: {}", existingAddress);
-        }
+            Address saved = addressService.save(deliveryAddress);
+            log.debug("Saved new address: {}", saved);
+            return saved;
+        });
+
         order.setDeliveryAddress(existingAddress);
     }
 
@@ -266,6 +263,14 @@ public class OrderService
         log.debug("The order is recent enough and can be updated");
     }
 
+    private void checkNotified(Order order)
+    {
+        if (order.getNotified())
+        {
+            throw ex(PilotesErrorCode.ORDER_NOTIFIED_ALREDY);
+        }
+    }
+
     /**
      * Returns the list of orders that belongs to the customer that match the given {@code filter}. <br>
      * The properties of the passed {@code filter} are not required to strictly match with the existing customers, even
@@ -275,11 +280,16 @@ public class OrderService
      * contains the string {@code ".com"}
      * @param filter the customer filter
      * @return the orders that belong to the customer that match the given {@code filter}
+     * @throws PilotesException with {@link PilotesErrorCode#CUSTOMER_NULL} if the order's customer is null.
      */
     public List<Order> searchByCustomer(Customer filter)
     {
+        Optional.ofNullable(filter).orElseThrow(() -> ex(PilotesErrorCode.CUSTOMER_NULL));
+
         log.debug("Searching orders for customer {}", filter);
+
         GenericPropertyMatcher containingPropertyMatcher = GenericPropertyMatcher.of(StringMatcher.CONTAINING);
+
         ExampleMatcher orderMatcher = ExampleMatcher.matching()
                 .withMatcher("customer.firstName", containingPropertyMatcher)
                 .withMatcher("customer.lastName", containingPropertyMatcher)
@@ -288,7 +298,9 @@ public class OrderService
 
         Order orderFilter = new Order();
         orderFilter.setCustomer(filter);
-        List<Order> orders = orderDao.findAll(Example.of(orderFilter, orderMatcher));
+
+        List<Order> orders = orderDao.findAll(Example.of(orderFilter,
+                orderMatcher));
         log.debug("Found {} orders", orders.size());
         return orders;
     }
@@ -341,11 +353,8 @@ public class OrderService
     {
         String email = getCustomerEmail(order);
 
-        Customer existingCustomer = customerService.getByEmail(email);
-        if (existingCustomer == null)
-        {
-            throw ex(PilotesErrorCode.CUSTOMER_NOT_FOUND);
-        }
+        Customer existingCustomer = customerService.getByEmail(email)
+                .orElseThrow(() -> ex(PilotesErrorCode.CUSTOMER_NOT_FOUND));
         order.setCustomer(existingCustomer);
     }
 
@@ -361,11 +370,8 @@ public class OrderService
 
     private String getCustomerEmail(Order order)
     {
-        Customer customer = order.getCustomer();
-        if (customer == null)
-        {
-            throw ex(PilotesErrorCode.CUSTOMER_NULL);
-        }
+        Customer customer = Optional.ofNullable(order.getCustomer())
+                .orElseThrow(() -> ex(PilotesErrorCode.CUSTOMER_NULL));
 
         String email = customer.getEmail();
         if (StringUtils.isEmpty(email))
@@ -405,8 +411,21 @@ public class OrderService
         return isResponseOk;
     }
 
+    private void checkOrderNotNull(Order order)
+    {
+        Optional.ofNullable(order).orElseThrow(() -> ex(PilotesErrorCode.ORDER_NULL));
+    }
+
     private PilotesException ex(PilotesErrorCode errorCode)
     {
         return new PilotesException(errorCode);
+    }
+
+    /** Visible for testing. */
+    static OrderService getInstanceForTesting(boolean notifierEnabled)
+    {
+        OrderService instance = new OrderService();
+        instance.notifierEnabled = notifierEnabled;
+        return instance;
     }
 }

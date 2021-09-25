@@ -3,16 +3,18 @@ package com.tui.proof.error;
 import org.springframework.http.HttpStatus;
 
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * The errors that can occur calling the API. <br>
  * Each concrete implementation specifies the {@link HttpStatus} and a message.
  * @author maura.piredda
  */
+@ToString
 public abstract class PilotesErrorCode
 {
-    // --- GENERIC ERRORS --------------------------------------------------------------------------------------------- 
-    
+    // --- GENERIC ERRORS ---------------------------------------------------------------------------------------------
+
     public static final PilotesErrorCode UNEXPECTED_ERROR = new PilotesErrorCode(HttpStatus.INTERNAL_SERVER_ERROR,
             "An unexpected error occurs")
     {
@@ -54,7 +56,7 @@ public abstract class PilotesErrorCode
             "The order cannot be null")
     {
     };
-    
+
     public static final PilotesErrorCode ORDER_NOT_FOUND = new PilotesErrorCode(HttpStatus.NOT_FOUND,
             "The requested order does not exist")
     {
@@ -67,6 +69,12 @@ public abstract class PilotesErrorCode
 
     public static final PilotesErrorCode ORDER_EXPIRED = new PilotesErrorCode(HttpStatus.UNPROCESSABLE_ENTITY,
             "The order has already been processed and cannot be updated anymore")
+    {
+    };
+
+    public static final PilotesErrorCode ORDER_NOTIFIED_ALREDY = new PilotesErrorCode(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "The order has been notified already")
     {
     };
 

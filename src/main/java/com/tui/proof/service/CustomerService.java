@@ -1,5 +1,7 @@
 package com.tui.proof.service;
 
+import java.util.Optional;
+
 import javax.transaction.Transactional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +32,7 @@ public class CustomerService
      *         {@code email}
      * @throws PilotesException with {@link PilotesErrorCode#CUSTOMER_EMAIL_EMPTY} if {@code email} is blank
      */
-    public Customer getByEmail(String email)
+    public Optional<Customer> getByEmail(String email)
     {
         if (StringUtils.isEmpty(email))
         {
@@ -38,6 +40,6 @@ public class CustomerService
         }
         Customer customer = new Customer();
         customer.setEmail(email);
-        return customerDao.findOne(Example.of(customer)).orElse(null);
+        return customerDao.findOne(Example.of(customer));
     }
 }
