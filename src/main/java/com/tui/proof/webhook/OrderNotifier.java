@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.tui.proof.model.service.OrderService;
+import com.tui.proof.service.OrderService;
 
 import lombok.extern.log4j.Log4j2;
 

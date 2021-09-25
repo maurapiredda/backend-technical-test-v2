@@ -17,7 +17,7 @@ import com.tui.proof.PilotesApplication;
 import com.tui.proof.error.PilotesErrorResponse;
 import com.tui.proof.model.Customer;
 import com.tui.proof.model.Order;
-import com.tui.proof.model.service.OrderService;
+import com.tui.proof.service.OrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

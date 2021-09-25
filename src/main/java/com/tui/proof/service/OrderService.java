@@ -1,4 +1,4 @@
-package com.tui.proof.model.service;
+package com.tui.proof.service;
 
 import java.math.BigInteger;
 import java.time.Duration;

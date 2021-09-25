@@ -1,4 +1,4 @@
-package com.tui.proof.model.service;
+package com.tui.proof.service;
 
 import javax.transaction.Transactional;
 
