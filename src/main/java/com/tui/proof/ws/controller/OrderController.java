@@ -81,14 +81,18 @@ public class OrderController
     }
 
     @Operation(tags = "Order",
-            summary = "Returns the list of orders that belongs to the customer that match the given filter. "
-                    + "The properties of the passed customer are not required to strictly match with the existing customers, evan a partial match will return the orders."
-                    + "For example, the filter {\"email\": \".com\"} will return all orders which the customer's email contains the string '.com'")
+            summary = "Returns the list of orders that belongs to the customer that match the given filter. ",
+            description = "The properties of the passed customer are not required to strictly match with the existing "
+                    + "customers, evan a partial match will return the orders."
+                    + "For example, the filter {\"email\": \".com\"} will return all orders which the customer's email contains the string '.com'. "
+                    + "This API requires is secured through a 'Bearer' token.")
     @ApiResponse(responseCode = "200", description = "The list of the orders of the given customer.")
-
     @ApiResponse(responseCode = "401",
             description = "Unauthorized access",
             content = @Content(schema = @Schema(implementation = PilotesErrorResponse.class)))
+    @ApiResponse(responseCode = "403",
+    description = "Forbidden access",
+    content = @Content(schema = @Schema(implementation = PilotesErrorResponse.class)))
 
     @PostMapping("/searchByCustomer")
     public List<Order> searchByCustomer(
