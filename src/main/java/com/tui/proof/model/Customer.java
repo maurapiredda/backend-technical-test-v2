@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -44,6 +45,7 @@ public class Customer
     @Column(length = 250, nullable = false)
     private String telephone;
 
+    @Email
     @NotNull(message = "the client's email cannot be empty")
     @Size(message = "the client's email max length is 250 characters")
     @Schema(description = "The client's email.", example = "leon.kennedy@rpd.com", maxLength = 250, required = true)
