@@ -1,5 +1,6 @@
 package com.tui.proof.model.service;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -114,9 +115,8 @@ public class OrderService
         {
             throw ex(PilotesErrorCode.ORDER_NULL);
         }
-
-        order.setCreationDate(ZonedDateTime.now(UTC));
-        order.setNotified(false);
+        
+        setDefaultFields(order);
         Order savedOrder = internalSave(order);
         return savedOrder.getOrderNumber();
     }
@@ -143,11 +143,20 @@ public class OrderService
         internalSave(existingOrder);
         return orderNumber;
     }
+    
+    private void setDefaultFields(Order newOrder)
+    {
+        newOrder.setCreationDate(ZonedDateTime.now(UTC));
+        newOrder.setNotified(false);
+        BigInteger sequenceValue = orderDao.getNextOrderSequenceValue();
+        String orderNumber = String.format("%010d", sequenceValue.longValue());
+        newOrder.setOrderNumber(orderNumber);
+    }
 
     private Order internalSave(Order order)
     {
-        setSavedCustomer(order);
-        setSavedAddress(order);
+        setCustomer(order);
+        setAddress(order);
 
         PilotesNumber pilotesNumber = order.getPilotesNumber();
         Double totalAmount = pilotesNumber.getNumber() * pilotesUnitaryPrice;
@@ -156,7 +165,7 @@ public class OrderService
         return orderDao.save(order);
     }
 
-    private void setSavedAddress(Order order)
+    private void setAddress(Order order)
     {
         Address deliveryAddress = order.getDeliveryAddress();
         if (deliveryAddress == null)
@@ -242,7 +251,7 @@ public class OrderService
         }
     }
 
-    private void setSavedCustomer(Order order)
+    private void setCustomer(Order order)
     {
         String email = getCustomerEmail(order);
         
