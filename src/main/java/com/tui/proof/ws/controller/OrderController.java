@@ -14,12 +14,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tui.proof.PilotesApplication;
+import com.tui.proof.error.PilotesErrorResponse;
 import com.tui.proof.model.Customer;
 import com.tui.proof.model.Order;
 import com.tui.proof.model.service.OrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.log4j.Log4j2;
@@ -82,6 +85,10 @@ public class OrderController
                     + "The properties of the passed customer are not required to strictly match with the existing customers, evan a partial match will return the orders."
                     + "For example, the filter {\"email\": \".com\"} will return all orders which the customer's email contains the string '.com'")
     @ApiResponse(responseCode = "200", description = "The list of the orders of the given customer.")
+
+    @ApiResponse(responseCode = "401",
+            description = "Unauthorized access",
+            content = @Content(schema = @Schema(implementation = PilotesErrorResponse.class)))
 
     @PostMapping("/searchByCustomer")
     public List<Order> searchByCustomer(

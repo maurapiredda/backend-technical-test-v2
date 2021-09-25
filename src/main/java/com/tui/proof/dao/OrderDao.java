@@ -13,8 +13,19 @@ import com.tui.proof.model.Order;
 @Repository
 public interface OrderDao extends JpaRepository<Order, Long>
 {
+    /**
+     * Returns the list of the orders that can be notified, that are the orders that are not yet notified and that are
+     * older than {@code nowMinusExpirationMinutes}, i.e. that cannot be updated anymore.
+     * @param nowMinusExpirationMinutes the date to compare with the order's creation date. An order cannot be updated
+     *                                  anymore if it is older than this date, thus it can be notified.
+     * @return the list of the orders that can be notified
+     */
     List<Order> findByCreationDateBeforeAndNotifiedFalse(ZonedDateTime nowMinusExpirationMinutes);
-    
-    @Query(value="call nextval('order_id_seq')", nativeQuery = true)
+
+    /**
+     * @return the next value of the order's sequence
+     */
+    // this query is database dependent, it must be customized if the database changes
+    @Query(value = "call nextval('order_id_seq')", nativeQuery = true)
     BigInteger getNextOrderSequenceValue();
 }
